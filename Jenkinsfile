@@ -53,18 +53,19 @@ pipeline {
                 )
             }
         }
-        stage('Smoke Test'){
+        stage('SmokeTest') {
             when {
                 branch 'master'
             }
-            steps{
-                script{
+            steps {
+                script {
+                    sleep (time: 5)
                     def response = httpRequest (
                         url: "http://$KUBE_MASTER_IP:8081/",
                         timeout: 30
                     )
-                    if(response.status != 200){
-                        error("This isnt giving a 200")
+                    if (response.status != 200) {
+                        error("Smoke test against canary deployment failed.")
                     }
                 }
             }
@@ -74,7 +75,6 @@ pipeline {
                 branch 'master'
             }
             steps {
-                input 'Deploy to Production?'
                 milestone(1)
                 kubernetesDeploy(
                     kubeconfigId: 'kubeconfig',
@@ -83,11 +83,10 @@ pipeline {
                 )
             }
         }
-        
     }
     post {
         cleanup {
-            kubernetesDeploy(
+            kubernetesDeploy (
                 kubeconfigId: 'kubeconfig',
                 configs: 'train-schedule-kube-canary.yml',
                 enableConfigSubstitution: true
